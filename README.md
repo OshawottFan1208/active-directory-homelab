@@ -40,6 +40,6 @@ VirtualBox, Windows Server (evaluation), Windows 11 Enterprise (evaluation), Act
 Real problems I hit while building this and how I fixed them: [troubleshooting-log.md](docs/troubleshooting-log.md)
 
 ## What I learned
-_Write 2-3 sentences when you finish. Example: what surprised you, which problem taught you the most, what you would do differently._
+To be continued
 
 > All usernames, passwords, and data in this repo are fake and for lab use only.
