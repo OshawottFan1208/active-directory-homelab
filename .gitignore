@@ -1,0 +1,5 @@
+*.iso
+*.vdi
+*.vmdk
+*.ova
+.DS_Store
