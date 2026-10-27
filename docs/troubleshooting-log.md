@@ -20,6 +20,15 @@ Each entry is written like a help desk ticket: symptom, cause, fix, takeaway.
 
 ---
 
+### 3. VM: "Request failed to Load Users"
+
+- **Symptom:** The script reported sucesss, but "server is unwilling to process the request" errors appeared and no users existed
+- **Cause:** The domain was named lab.locals(a typo at promotion), but the script assumed lab.locals
+- **Fix:** Confirmed the real domain with Get-ADDomain, and rewrote the script to read the domain from AD and report real errors
+- **Takeaway:** Verify test results rather than trusting a success message, and avoid hard coding enviornment values
+
+---
+
 ### Template for new entries
 ### N. Short title of the problem
 - **Symptom:**

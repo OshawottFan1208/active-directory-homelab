@@ -3,7 +3,7 @@
 A hands-on Active Directory environment built in VirtualBox (Pop!_OS host) to practice the daily tasks of a help desk / IT support role: user accounts, groups, permissions, Group Policy, and troubleshooting.
 
 ## What I built
-- [ ] Windows Server domain controller (`lab.local`) with DNS
+- [ ] Windows Server domain controller (`lab.locals`) with DNS
 - [ ] Organizational Units, users, and security groups
 - [ ] User attributes (title, department, phone, email)
 - [ ] Group Policy (password/lockout policy, drive mapping, restrictions)

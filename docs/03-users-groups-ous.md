@@ -5,7 +5,7 @@ Model a small company: departments as OUs, employees as users, and access throug
 
 ## Structure
 ```
-lab.local
+lab.locals
 ├── Sales
 ├── HR
 └── IT
