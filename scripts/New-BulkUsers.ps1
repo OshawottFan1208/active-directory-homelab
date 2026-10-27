@@ -4,9 +4,11 @@
 
 .DESCRIPTION
     Expected CSV columns: FirstName, LastName, SamAccountName, Department, Title, Phone
+    - Reads the domain name and DN from Active Directory (no hard-coded domain).
     - Creates the department OU if it does not exist.
     - Skips users that already exist.
     - Sets a temporary password and forces a change at first logon.
+    - Reports real failures with the actual error message.
 
 .EXAMPLE
     .\New-BulkUsers.ps1 -CsvPath .\users.csv
@@ -18,51 +20,64 @@
 
 param(
     [string]$CsvPath         = ".\users.csv",
-    [string]$DomainDN        = "DC=lab,DC=local",
-    [string]$UpnSuffix       = "lab.local",
     [string]$DefaultPassword = "ChangeMe!2026"
 )
 
+$ErrorActionPreference = "Stop"
 Import-Module ActiveDirectory
+
+$domain    = Get-ADDomain
+$DomainDN  = $domain.DistinguishedName
+$UpnSuffix = $domain.DNSRoot
+Write-Host "Target domain: $UpnSuffix ($DomainDN)"
 
 $securePw = ConvertTo-SecureString $DefaultPassword -AsPlainText -Force
 $created  = 0
 $skipped  = 0
+$failed   = 0
 
-Import-Csv -Path $CsvPath | ForEach-Object {
-    $dept   = $_.Department
+foreach ($u in Import-Csv -Path $CsvPath) {
+    $dept   = $u.Department.Trim()
+    $sam    = $u.SamAccountName.Trim()
     $ouPath = "OU=$dept,$DomainDN"
 
-    # Create the OU if needed
-    if (-not (Get-ADOrganizationalUnit -Filter "Name -eq '$dept'" -ErrorAction SilentlyContinue)) {
-        New-ADOrganizationalUnit -Name $dept -Path $DomainDN
-        Write-Host "Created OU: $dept"
+    try {
+        # Create the OU if needed
+        if (-not (Get-ADOrganizationalUnit -Filter "Name -eq '$dept'")) {
+            New-ADOrganizationalUnit -Name $dept -Path $DomainDN
+            Write-Host "Created OU: $dept"
+        }
+
+        # Skip existing users
+        if (Get-ADUser -Filter "SamAccountName -eq '$sam'") {
+            Write-Warning "Skipping ${sam}: already exists"
+            $skipped++
+            continue
+        }
+
+        New-ADUser `
+            -Name                  "$($u.FirstName) $($u.LastName)" `
+            -GivenName             $u.FirstName `
+            -Surname               $u.LastName `
+            -SamAccountName        $sam `
+            -UserPrincipalName     "$sam@$UpnSuffix" `
+            -EmailAddress          "$sam@$UpnSuffix" `
+            -Department            $dept `
+            -Title                 $u.Title `
+            -OfficePhone           $u.Phone `
+            -Path                  $ouPath `
+            -AccountPassword       $securePw `
+            -ChangePasswordAtLogon $true `
+            -Enabled               $true
+
+        Write-Host "Created user: $sam ($dept)"
+        $created++
     }
-
-    # Skip existing users
-    if (Get-ADUser -Filter "SamAccountName -eq '$($_.SamAccountName)'" -ErrorAction SilentlyContinue) {
-        Write-Warning "Skipping $($_.SamAccountName): already exists"
-        $script:skipped++
-        return
+    catch {
+        Write-Host "FAILED ${sam}: $($_.Exception.Message)" -ForegroundColor Red
+        $failed++
     }
-
-    New-ADUser `
-        -Name                  "$($_.FirstName) $($_.LastName)" `
-        -GivenName             $_.FirstName `
-        -Surname               $_.LastName `
-        -SamAccountName        $_.SamAccountName `
-        -UserPrincipalName     "$($_.SamAccountName)@$UpnSuffix" `
-        -EmailAddress          "$($_.SamAccountName)@$UpnSuffix" `
-        -Department            $dept `
-        -Title                 $_.Title `
-        -OfficePhone           $_.Phone `
-        -Path                  $ouPath `
-        -AccountPassword       $securePw `
-        -ChangePasswordAtLogon $true `
-        -Enabled               $true
-
-    Write-Host "Created user: $($_.SamAccountName) ($dept)"
-    $script:created++
 }
 
-Write-Host "`nDone. Created: $created  Skipped: $skipped"
+Write-Host "`nDone. Created: $created  Skipped: $skipped  Failed: $failed"
+
