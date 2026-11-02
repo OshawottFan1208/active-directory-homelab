@@ -35,3 +35,19 @@ Each entry is written like a help desk ticket: symptom, cause, fix, takeaway.
 - **Cause:**
 - **Fix:**
 - **Takeaway:**
+
+---
+
+Domain join: "non-existent domain" from nslookup
+Symptom: nslookup lab.locals on the client returned "non-existent domain" and the domain join would not proceed.
+Cause: The client was using the wrong DNS server (the NAT adapter's) instead of the domain controller.
+Fix: Pointed the lab adapter's DNS at DC01 (192.168.10.10), tested with nslookup lab.locals 192.168.10.10, and temporarily disabled the NAT adapter during the join.
+Takeaway: Domain join problems are usually DNS problems. Test name resolution before blaming the account.
+
+---
+
+Domain login: password rejected
+Symptom: The default password was rejected for a domain user.
+Cause: I had already reset that account's password during earlier help desk practice.
+Fix: Logged in with a user I hadn't touched, and used the temporary password for the reset account.
+Takeaway: Check the account's history before assuming the system is broken.
